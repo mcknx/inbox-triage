@@ -1,0 +1,467 @@
+{
+  "id": "vaP3InboxTriage",
+  "name": "VA P3 — Inbox Triage",
+  "active": true,
+  "settings": {},
+  "connections": {
+    "Every minute": {
+      "main": [
+        [
+          {
+            "node": "List messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run now": {
+      "main": [
+        [
+          {
+            "node": "List messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List messages": {
+      "main": [
+        [
+          {
+            "node": "Known ids",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Known ids": {
+      "main": [
+        [
+          {
+            "node": "Filter new",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter new": {
+      "main": [
+        [
+          {
+            "node": "Any new?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Any new?": {
+      "main": [
+        [
+          {
+            "node": "Each email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Nothing new",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Each email": {
+      "main": [
+        [
+          {
+            "node": "Summary",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get message": {
+      "main": [
+        [
+          {
+            "node": "Load kb",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load kb": {
+      "main": [
+        [
+          {
+            "node": "Build prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build prompt": {
+      "main": [
+        [
+          {
+            "node": "Ask Claude",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ask Claude": {
+      "main": [
+        [
+          {
+            "node": "Parse",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse": {
+      "main": [
+        [
+          {
+            "node": "Save",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save": {
+      "main": [
+        [
+          {
+            "node": "Each email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summary": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodes": [
+    {
+      "id": "t1",
+      "name": "Every minute",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "t2",
+      "name": "Run now",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        220,
+        200
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "inbox-run",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "webhookId": "va-p3-inbox-run"
+    },
+    {
+      "id": "n1",
+      "name": "List messages",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "url": "http://mailpit:8025/api/v1/messages?limit=200",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "n2",
+      "name": "Known ids",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        880,
+        0
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "select coalesce(json_agg(mail_id), '[]') as known from p3_emails where mail_id in (select jsonb_array_elements_text($1::jsonb))",
+        "options": {
+          "queryReplacement": "={{ [JSON.stringify(($json.messages || []).map(m => m.ID))] }}"
+        }
+      },
+      "credentials": {
+        "postgres": {
+          "id": "vaPgLocal",
+          "name": "VA Postgres (local)"
+        }
+      }
+    },
+    {
+      "id": "n3",
+      "name": "Filter new",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const list = $('List messages').first().json.messages || [];\nconst known = new Set($input.first().json.known || []);\nconst fresh = list.filter(m => !known.has(m.ID)).map(m => ({ json: { ID: m.ID } }));\nreturn fresh.length ? fresh : [{ json: { none: true } }];"
+      }
+    },
+    {
+      "id": "n4",
+      "name": "Any new?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1320,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "a1",
+              "leftValue": "={{ $json.ID || '' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      }
+    },
+    {
+      "id": "n5",
+      "name": "Each email",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1540,
+        0
+      ],
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      }
+    },
+    {
+      "id": "n6",
+      "name": "Get message",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1760,
+        0
+      ],
+      "parameters": {
+        "url": "={{ 'http://mailpit:8025/api/v1/message/' + encodeURIComponent($json.ID) }}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "n7",
+      "name": "Load kb",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1980,
+        0
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "select body from kb where id = 1",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "vaPgLocal",
+          "name": "VA Postgres (local)"
+        }
+      }
+    },
+    {
+      "id": "n8",
+      "name": "Build prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2200,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const m = $('Get message').first().json;\nconst today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });\nconst from = (m.From && m.From.Address) || '';\nconst fromLine = ((m.From && m.From.Name) ? m.From.Name + ' <' + from + '>' : from);\nconst prompt = [\n  'You sort email for Bayview Dental\\'s front desk (a dental clinic in Davao City). Return ONLY JSON:',\n  '{\"category\":\"invoice\"|\"enquiry\"|\"supplier\"|\"spam\"|\"other\",\"urgency\":\"low\"|\"normal\"|\"high\",\"summary\":string (max 20 words),',\n  ' \"invoice\":{\"vendor\":string,\"invoice_no\":string,\"amount\":number,\"currency\":\"PHP\"|string,\"due_date\":\"YYYY-MM-DD\"}|null,',\n  ' \"reply_draft\":string|null}',\n  'Rules: invoice only when the email bills the clinic (fields copied exactly from the email, never guessed; null if any is missing → category \"supplier\", urgency \"high\").',\n  'reply_draft only for \"enquiry\": warm, under 80 words, answers only from CLINIC INFO, otherwise says a team member will confirm; sign \"Bayview Dental\".',\n  'urgency \"high\" if an invoice is due within 3 days or overdue, or a patient is in pain/rescheduling today.',\n  'CLINIC INFO: ' + ($input.first().json.body || ''),\n  'TODAY: ' + today,\n  'EMAIL FROM: ' + fromLine + ' SUBJECT: ' + (m.Subject || '') + ' BODY (first 4000 chars): ' + String(m.Text || '').slice(0, 4000),\n].join('\\n');\nreturn [{ json: { prompt, today, mail_id: m.ID, from, subject: String(m.Subject || '').slice(0, 300), received_at: m.Date || new Date().toISOString(), email: (m.Subject || '') + '\\n' + String(m.Text || '').slice(0, 4000) } }];"
+      }
+    },
+    {
+      "id": "n9",
+      "name": "Ask Claude",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2420,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8788/reply",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ prompt: $json.prompt }) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "n10",
+      "name": "Parse",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2640,
+        0
+      ],
+      "parameters": {
+        "jsCode": "// Turns Claude's reply into a safe row. Embedded verbatim in workflow.json's \"Parse\" node; tested by parse.check.mjs.\n// text: bridge reply (or undefined if the bridge failed), today: YYYY-MM-DD, email: subject + body the model read.\nfunction parseTriage(text, today, email) {\n  const fallback = { category: 'other', urgency: 'normal', summary: 'Needs a human look', invoice: null, reply_draft: '' };\n  let r;\n  try {\n    if (typeof text !== 'string') throw new Error('bridge failed');\n    const t = text.replace(/```(?:json)?/g, '');\n    r = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}') + 1));\n    if (!r || typeof r !== 'object') throw new Error('not an object');\n  } catch (e) { return fallback; }\n  const pick = (v, ok, d) => (ok.includes(v) ? v : d);\n  let category = pick(r.category, ['invoice', 'enquiry', 'supplier', 'spam', 'other'], 'other');\n  let urgency = pick(r.urgency, ['low', 'normal', 'high'], 'normal');\n  const summary = (typeof r.summary === 'string' && r.summary.trim()) ? r.summary.trim().slice(0, 200) : fallback.summary;\n  const str = v => (typeof v === 'string' && v.trim()) ? v.trim().slice(0, 100) : '';\n  const realDate = d => typeof d === 'string' && /^\\d{4}-\\d{2}-\\d{2}$/.test(d) && !isNaN(Date.parse(d + 'T00:00:00Z'))\n    && new Date(d + 'T00:00:00Z').toISOString().slice(0, 10) === d; // rejects 2026-02-30\n  const body = String(email || '').toLowerCase();\n  // Keep an invoice only when every field is well-formed and the vendor + invoice number are really in the email\n  // (\"copied, never guessed\"); a half-read invoice goes to a human as supplier/high.\n  const i = r.invoice;\n  let invoice = null;\n  if (category === 'invoice') {\n    const ok = i && str(i.vendor) && str(i.invoice_no) && Number.isFinite(i.amount) && i.amount > 0 && str(i.currency)\n      && realDate(i.due_date) && body.includes(str(i.invoice_no).toLowerCase()) && body.includes(str(i.vendor).toLowerCase());\n    if (ok) invoice = { vendor: str(i.vendor), invoice_no: str(i.invoice_no), amount: Math.round(i.amount * 100) / 100, currency: str(i.currency), due_date: i.due_date };\n    else { category = 'supplier'; urgency = 'high'; }\n  }\n  // Belt and braces for the money rule: due within 3 days or overdue is always high.\n  if (invoice && (Date.parse(invoice.due_date) - Date.parse(today)) <= 3 * 864e5) urgency = 'high';\n  const reply_draft = (category === 'enquiry' && typeof r.reply_draft === 'string' && r.reply_draft.trim()) ? r.reply_draft.trim().slice(0, 1500) : '';\n  return { category, urgency, summary, invoice, reply_draft };\n}\n\nconst b = $('Build prompt').first().json;\nreturn [{ json: parseTriage($input.first().json.text, b.today, b.email) }];"
+      }
+    },
+    {
+      "id": "n11",
+      "name": "Save",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        2860,
+        0
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "with e as (\n  insert into p3_emails (mail_id, from_addr, subject, received_at, category, summary, urgency)\n  values ($1, $2, $3, $4::timestamptz, $5, $6, $7)\n  on conflict (mail_id) do nothing\n  returning mail_id\n), i as (\n  insert into p3_invoices (mail_id, vendor, invoice_no, amount, currency, due_date)\n  select mail_id, $8, $9, nullif($10, '')::numeric, $11, nullif($12, '')::date from e where $8 <> ''\n  on conflict (vendor, invoice_no) do nothing\n  returning 1\n), d as (\n  insert into p3_drafts (mail_id, to_addr, subject, body)\n  select mail_id, $2, 'Re: ' || $3, $13 from e where $13 <> ''\n  returning 1\n)\nselect (select count(*) from e)::int as saved, $5 as category, $7 as urgency, ($8 <> '') as invoice, ($13 <> '') as draft",
+        "options": {
+          "queryReplacement": "={{ (() => { const b = $('Build prompt').first().json, p = $('Parse').first().json, i = p.invoice || {}; return [b.mail_id, b.from, b.subject, b.received_at, p.category, p.summary, p.urgency, i.vendor || '', i.invoice_no || '', i.amount != null ? String(i.amount) : '', i.currency || '', i.due_date || '', p.reply_draft]; })() }}"
+        }
+      },
+      "credentials": {
+        "postgres": {
+          "id": "vaPgLocal",
+          "name": "VA Postgres (local)"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "n12",
+      "name": "Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3080,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const rows = $input.all().map(i => i.json);\nreturn [{ json: { processed: rows.length, invoices: rows.filter(r => r.invoice).length, drafts: rows.filter(r => r.draft).length, high: rows.filter(r => r.urgency === 'high').length } }];"
+      }
+    },
+    {
+      "id": "n13",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        3300,
+        0
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "n14",
+      "name": "Nothing new",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        3520,
+        0
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { processed: 0, invoices: 0, drafts: 0, high: 0 } }}",
+        "options": {}
+      }
+    }
+  ]
+}

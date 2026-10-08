@@ -1,0 +1,9 @@
+[
+ {"id": "1-hook", "text": "A clinic's front desk drowns in email. Patient questions, supplier promos, spam. And somewhere in there, an invoice that slips past its due date."},
+ {"id": "2-inbox", "text": "This is Bayview Dental's inbox, a local test mailbox with eight new emails. Three of them are supplier invoices."},
+ {"id": "3-run", "text": "The workflow checks the mailbox every minute. Here I trigger it right away. Claude reads each email live, and the dashboard fills as they land."},
+ {"id": "4-overdue", "text": "Every invoice goes into one table: vendor, number, amount and due date. CleanPro is already overdue, so it shows in red. Total due: 28,150 pesos."},
+ {"id": "5-draft", "text": "For patient questions, it drafts the reply. The whitening price comes from the clinic's own info, ready for staff to check and send."},
+ {"id": "6-flow", "text": "Behind it is one n8n workflow. Check the mailbox. Skip what's already sorted. Read each email. Claude sorts it and pulls out the invoice. Save it for the dashboard."},
+ {"id": "7-end", "text": "Built by McKeen Asma, AI Automation V A, with n8n, and Claude."}
+]

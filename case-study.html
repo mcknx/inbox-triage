@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Inbox Triage + Invoice Extractor with n8n + Claude | Case Study</title>
+<meta name="description" content="Case study: email triage and invoice data extraction for a dental clinic's inbox, built with n8n + Claude. 8 emails sorted in 53 seconds, 3 supplier invoices pulled into one table (₱28,150 due, 1 overdue flagged), spam caught, 3 reply drafts ready. Built by McKeen Asma, AI Automation VA.">
+<meta name="author" content="McKeen Asma">
+<meta name="robots" content="index, follow">
+<meta property="og:type" content="article">
+<meta property="og:title" content="AI inbox triage: sorts the email, captures the invoices, drafts the replies">
+<meta property="og:description" content="Mailbox → n8n → Claude sorts each email → invoice fields, reply drafts and urgent flags saved → one front-desk dashboard. A real recorded run, with an extracted invoice and a reply draft word for word.">
+<meta property="og:image" content="img/poster.jpg">
+<meta property="og:image:width" content="900">
+<meta property="og:image:height" content="506">
+<meta property="og:image:alt" content="Bayview Dental front-desk dashboard: 8 emails sorted, 3 invoices captured, ₱28,150.00 total due, CleanPro invoice overdue in red">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="AI inbox triage: sorts the email, captures the invoices, drafts the replies">
+<meta name="twitter:description" content="An n8n + Claude inbox assistant that sorts a clinic's email, pulls supplier invoices into one table, flags what's overdue and drafts patient replies. Real run, real output.">
+<meta name="twitter:image" content="img/poster.jpg">
+<style>
+:root{--bg:#f7f8fa;--card:#fff;--ink:#14212b;--muted:#5a6b78;--line:#dde3e8;--accent:#0f7c86;--accent-soft:#e3f3f4;--hot:#e0662b}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1519;--card:#172026;--ink:#e6edf1;--muted:#9aabb6;--line:#2a3640;--accent:#4fc1ca;--accent-soft:#16343a;--hot:#ff8a52}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:760px;margin:0 auto;padding:32px 16px 56px}
+h1{font-size:clamp(26px,6vw,36px);line-height:1.2;margin:.2em 0 .3em}
+h2{font-size:21px;margin:40px 0 10px}
+p{margin:0 0 12px}
+.tag{display:inline-block;font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--accent)}
+.lede{font-size:19px;color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:24px 0}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.stat b{display:block;font-size:28px;color:var(--accent);line-height:1.2}
+.stat span{font-size:14px;color:var(--muted)}
+figure{margin:16px 0;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px}
+figure img{display:block;width:100%;height:auto;border-radius:8px}
+figcaption{font-size:14px;color:var(--muted);padding:8px 4px 0}
+svg{display:block;width:100%;height:auto}
+.box{fill:var(--card);stroke:var(--line);stroke-width:1.5}
+.box.ai{stroke:var(--accent);stroke-width:2}
+.t1{fill:var(--ink);font:600 15px system-ui,sans-serif}
+.t2{fill:var(--muted);font:13px system-ui,sans-serif}
+.arrow{stroke:var(--accent);stroke-width:2;fill:none}
+.reply{background:var(--accent-soft);border-left:4px solid var(--accent);border-radius:8px;padding:12px 16px;white-space:pre-line;font-size:16px}
+ol,ul{padding-left:22px;margin:0 0 12px}
+li{margin:6px 0}
+.note{font-size:14px;color:var(--muted)}
+footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--line);font-size:15px}
+a{color:var(--accent)}
+</style>
+<style>
+h3{font-size:17px;margin:20px 0 4px}
+.transcript p{margin:0 0 10px}
+.transcript time{display:inline-block;min-width:3.2em;font-variant-numeric:tabular-nums;color:var(--muted);font-size:14px}
+.next{margin:24px 0 0;font-size:16px}
+.src{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 16px;white-space:pre-line;font-size:15px;margin:0 0 12px}
+.row{width:100%;border-collapse:collapse;margin:0 0 12px;font-size:15px;background:var(--accent-soft);border-radius:8px;overflow:hidden}
+.row th,.row td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.row th{width:38%;color:var(--muted);font-weight:600}
+.hot{color:var(--hot);font-weight:600}
+</style>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Article","headline":"AI inbox triage: sorts a clinic's email, captures supplier invoices, drafts patient replies","description":"Case study of an n8n + Claude inbox assistant for a demo dental clinic: it sorts each email (invoice, patient enquiry, supplier, spam), copies invoice fields into one table, flags overdue and due-soon invoices, and drafts replies to patient questions, all saved to Postgres for a front-desk dashboard.","image":"img/poster.jpg","inLanguage":"en","datePublished":"2026-10-09","author":{"@type":"Person","name":"McKeen Asma","jobTitle":"AI Automation VA","url":"https://mckenneth.vercel.app","address":{"@type":"PostalAddress","addressLocality":"Davao City","addressCountry":"PH"}},"about":["email triage","inbox management","invoice data extraction","n8n workflow automation","Claude AI"],"keywords":"inbox management, email triage, invoice extraction, data entry, data extraction, bookkeeping support, n8n, Claude, virtual assistant, dental clinic, Postgres","isBasedOn":{"@type":"SoftwareSourceCode","name":"inbox-triage","codeRepository":"https://github.com/mcknx/inbox-triage","license":"https://opensource.org/licenses/MIT"}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"VideoObject","name":"AI inbox triage + invoice extractor demo (n8n + Claude)","description":"87-second demo: a demo dental clinic's test mailbox gets 8 emails; an n8n workflow has Claude sort each one live, captures 3 supplier invoices (₱28,150 due, CleanPro overdue in red), catches the spam and drafts the patient replies on one front-desk dashboard. Waiting time is trimmed and captioned; the on-screen timer shows real time.","thumbnailUrl":"img/poster.jpg","contentUrl":"demo/p3-demo.mp4","uploadDate":"2026-10-09","duration":"PT1M27S","inLanguage":"en","creator":{"@type":"Person","name":"McKeen Asma"},"transcript":"A clinic's front desk drowns in email. Patient questions, supplier promos, spam. And somewhere in there, an invoice that slips past its due date. This is Bayview Dental's inbox, a local test mailbox with eight new emails. Three of them are supplier invoices. The workflow checks the mailbox every minute. Here I trigger it right away. Claude reads each email live, and the dashboard fills as they land. Every invoice goes into one table: vendor, number, amount and due date. CleanPro is already overdue, so it shows in red. Total due: 28,150 pesos. For patient questions, it drafts the reply. The whitening price comes from the clinic's own info, ready for staff to check and send. Behind it is one n8n workflow. Check the mailbox. Skip what's already sorted. Read each email. Claude sorts it and pulls out the invoice. Save it for the dashboard. Built by McKeen Asma, AI Automation VA, with n8n, and Claude."}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Will it make up invoice numbers or amounts?","acceptedAnswer":{"@type":"Answer","text":"Claude is told to copy invoice fields exactly from the email. Then the workflow checks it in code: an invoice is only saved if the vendor name and invoice number really appear in the email, the amount is a number and the due date is a real date. If anything fails, nothing is saved as an invoice; the email is marked supplier, high urgency, for a person to read. AI can still misread, so every email stays on the dashboard."}},{"@type":"Question","name":"Does it send emails on its own?","acceptedAnswer":{"@type":"Answer","text":"No. It only writes reply drafts for patient questions. A staff member reads, edits and sends them. Price and policy answers come only from the clinic's info sheet; anything else says a team member will confirm."}},{"@type":"Question","name":"Does it work with Gmail or Outlook?","acceptedAnswer":{"@type":"Answer","text":"This demo reads a local test mailbox (Mailpit) so no real inbox is touched. n8n has Gmail and Microsoft Outlook nodes, so the 'check the mailbox' step would be swapped for one of those and connected to your account; the sort, extract and save steps stay the same. I have not run it on a real Gmail or Outlook inbox yet."}},{"@type":"Question","name":"Can the invoices go to my spreadsheet or accounting tool?","acceptedAnswer":{"@type":"Answer","text":"In the demo they go to a Postgres table and the dashboard. n8n has Google Sheets, Airtable, QuickBooks and Xero nodes, so the save step could write there instead; I would set that up and test it with your own invoices."}},{"@type":"Question","name":"What does it cost to run?","acceptedAnswer":{"@type":"Answer","text":"Two running costs: hosting n8n (self-hosted on a small server, or an n8n Cloud plan) and AI usage, billed per email by the AI provider. I would estimate both from your monthly email volume before we start."}}]}
+</script>
+</head>
+<body>
+<main>
+<article>
+<header>
+<span class="tag">Case study · Inbox triage + invoice extraction</span>
+<h1>AI inbox triage: every email sorted, every supplier invoice in one table, patient replies drafted</h1>
+<p class="lede">A clinic's front desk gets patient questions, supplier promos, spam and invoices all in one inbox, and an invoice slips past its due date. This assistant reads each email, sorts it, copies the invoice details into one table, flags what is overdue, and drafts the reply to each patient for staff to check and send.</p>
+<p class="code-link"><a href="https://github.com/mcknx/inbox-triage">View the code on GitHub →</a></p>
+</header>
+
+<figure id="demo-video"><video controls preload="metadata" playsinline src="demo/p3-demo.mp4" poster="img/poster.jpg" style="display:block;width:100%;height:auto;border-radius:8px" aria-describedby="transcript-intro"></video><figcaption>The 87-second demo, narrated in my own voice (AI voice clone). The video trims the waiting time and says so on screen; the on-screen timer shows the real time. Prefer reading? The <a href="#transcript">full transcript</a> is below.</figcaption></figure>
+
+<div class="stats">
+<div class="stat"><b>8 emails in under a minute</b><span>each one read and labelled by AI, about 7 seconds per email</span></div>
+<div class="stat"><b>₱28,150 in bills found</b><span>3 supplier invoices put in one list with due dates, no typing</span></div>
+<div class="stat"><b>1 overdue caught</b><span>flagged in red, plus 1 due in 3 days marked urgent</span></div>
+</div>
+
+<section id="plain-words">
+<h2>What changes for the front desk</h2>
+<ul>
+<li><b>Before:</b> staff open every email to find what matters. Bills hide between promos and spam until the supplier sends an "OVERDUE" notice.</li>
+<li><b>After:</b> every email arrives already labelled (bill, patient question, supplier, spam). Every bill sits in one list with its amount and due date, late ones in red. Each patient question has a reply waiting for staff to approve.</li>
+</ul>
+</section>
+
+<section id="real-invoice">
+<h2>A real bill, read and filed automatically</h2>
+<p>From the recorded run. This is the email CleanPro sent (a fictional vendor):</p>
+<div class="src">Subject: OVERDUE: Invoice #CP-3310
+Vendor: CleanPro Services
+Invoice no: #CP-3310
+Service: monthly clinic deep cleaning and sanitation
+Amount: PHP 3,500.00
+Due date: 2026-10-07</div>
+<p>And what the assistant filed in the bills list, with nobody typing anything:</p>
+<table class="row">
+<tr><th>Vendor</th><td>CleanPro Services</td></tr>
+<tr><th>Invoice #</th><td>#CP-3310</td></tr>
+<tr><th>Amount</th><td>₱3,500.00 (PHP)</td></tr>
+<tr><th>Due</th><td class="hot">2026-10-07 · overdue, marked urgent</td></tr>
+<tr><th>Summary</th><td>CleanPro Services invoice #CP-3310 for PHP 3,500 monthly deep cleaning is overdue since 2026-10-07.</td></tr>
+</table>
+<p>It only files a bill when the company name and invoice number really appear in the email. If they don't, nothing is filed and a person checks the email instead. That safety check is built in, so it doesn't rely on the AI being right.</p>
+<figure><img src="img/poster.jpg" width="900" height="506" alt="The front-desk dashboard: 8 emails sorted, 3 invoices captured, ₱28,150.00 total due, 3 needing attention; the sorted inbox on the left and the invoices table on the right with CleanPro overdue in red"><figcaption>The front desk sees the sorted inbox, the invoices with the total due, and what needs attention, on one screen.</figcaption></figure>
+</section>
+
+<section id="real-draft">
+<h2>A real reply draft, word for word</h2>
+<p>Liza emailed: "How much is teeth whitening and do you take walk-ins on Saturday?" The assistant drafted this for staff to check and send:</p>
+<p class="reply">Hi Liza, thank you for reaching out! Teeth whitening starts from ₱8,000, and the dentist confirms the final price after a check-up. We're open Monday to Saturday, 9am to 6pm. A team member will confirm whether we can take walk-ins on Saturday. We accept cash, GCash, or card. We look forward to seeing you!
+
+Bayview Dental</p>
+<p>The price and hours come from the clinic's info sheet. Walk-ins aren't on the sheet, so it doesn't guess: a team member will confirm.</p>
+<figure><img src="img/drafts.jpg" width="900" height="506" loading="lazy" alt="Three reply drafts ready to send: to Grace about PhilCare HMO, to Mark about rescheduling today's cleaning, and to Liza about the whitening price"><figcaption>Three patient emails, three drafts ready for staff to check and send.</figcaption></figure>
+</section>
+
+<section id="problem">
+<h2>The problem: one inbox, four kinds of email, and a bill that gets missed</h2>
+<p>Patient questions wait while staff scroll past promos and spam. Supplier invoices sit unread until the vendor sends an "OVERDUE" notice.</p>
+</section>
+
+<section id="results">
+<h2>Results (measured in the recorded run)</h2>
+<ul>
+<li><b>8 of 8 emails sorted</b> in <b>52.9 s</b>: 3 invoices, 3 patient enquiries, 1 supplier promo, 1 spam (a fake "free iPhone" asking for bank details).</li>
+<li><b>3 invoices captured:</b> DentSupply PH INV-2041 ₱18,450, Davao Lab Works INV-778 ₱6,200, CleanPro Services #CP-3310 ₱3,500. <b>₱28,150 total due.</b></li>
+<li><b>Urgent flags:</b> CleanPro (overdue), Davao Lab Works (due in 3 days) and Mark, a patient who needs to move today's appointment.</li>
+<li><b>3 reply drafts</b> for the 3 patient emails; nothing is sent without a person.</li>
+<li><b>Runs again safely:</b> the next check skips emails it already sorted, so nothing is counted twice.</li>
+</ul>
+<p class="note">Honest note: Bayview Dental is a demo clinic I made up, the vendors and patients are fictional, and the emails go to a local test mailbox (Mailpit), not a real Gmail or Outlook inbox. There is no paying client here. The workflow, the AI output and the timings are real, from one recorded run. The video trims the waiting time and says so on screen; the timer shows the real time.</p>
+</section>
+
+<section id="how-it-works">
+<h2>How it works: five steps</h2>
+<p>Every minute, the workflow runs the same five steps, automatically:</p>
+<svg viewBox="0 0 360 250" style="max-width:520px;margin:0 auto" role="img" aria-label="Five steps: check the mailbox, skip what's already sorted, read each email, Claude sorts and extracts, save for the dashboard">
+<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" style="fill:var(--accent)"/></marker></defs>
+<rect class="box" x="4" y="4" width="150" height="70" rx="12"/>
+<text class="t1" x="79" y="36" text-anchor="middle">1. Check mailbox</text>
+<text class="t2" x="79" y="56" text-anchor="middle">every minute</text>
+<rect class="box" x="206" y="4" width="150" height="70" rx="12"/>
+<text class="t1" x="281" y="36" text-anchor="middle">2. Skip sorted</text>
+<text class="t2" x="281" y="56" text-anchor="middle">only new emails</text>
+<rect class="box ai" x="206" y="176" width="150" height="70" rx="12"/>
+<text class="t1" x="281" y="208" text-anchor="middle">4. Claude sorts</text>
+<text class="t2" x="281" y="228" text-anchor="middle">type, invoice, draft</text>
+<rect class="box" x="206" y="90" width="150" height="70" rx="12" style="stroke-dasharray:4 3"/>
+<text class="t1" x="281" y="122" text-anchor="middle">3. Read email</text>
+<text class="t2" x="281" y="142" text-anchor="middle">+ clinic info</text>
+<rect class="box" x="4" y="176" width="150" height="70" rx="12"/>
+<text class="t1" x="79" y="208" text-anchor="middle">5. Save</text>
+<text class="t2" x="79" y="228" text-anchor="middle">for the dashboard</text>
+<path class="arrow" d="M156 39H202" marker-end="url(#ah)"/>
+<path class="arrow" d="M281 76V86" marker-end="url(#ah)"/>
+<path class="arrow" d="M281 162V172" marker-end="url(#ah)"/>
+<path class="arrow" d="M204 211H158" marker-end="url(#ah)"/>
+</svg>
+<ol>
+<li><b>Check the mailbox.</b> Every minute (or on demand), it lists the inbox.</li>
+<li><b>Skip what's already sorted.</b> Emails it has seen before are left alone.</li>
+<li><b>Read each email</b> together with the clinic's info sheet (prices, hours, HMOs).</li>
+<li><b>AI sorts it:</b> invoice, patient question, supplier or spam; how urgent; a one-line summary; the invoice details; a reply draft for patients. Code then double-checks the invoice against the email.</li>
+<li><b>Save.</b> The email, the invoice row and the draft go to the database, and the front-desk dashboard shows them.</li>
+</ol>
+</section>
+
+<section id="mailbox">
+<h2>The test mailbox it reads</h2>
+<figure><img src="img/mailpit.jpg" width="900" height="506" loading="lazy" alt="The Mailpit test mailbox with 8 emails to frontdesk@bayviewdental.example: a prize scam, a DentSupply promo, three patient questions and three supplier invoices"><figcaption>Eight sample emails in a local test mailbox (Mailpit). Swapping in Gmail or Outlook changes only step 1.</figcaption></figure>
+</section>
+
+<section id="tools">
+<h2>Tools used</h2>
+<ul>
+<li><b>n8n</b> (self-hosted): the workflow (Schedule, Webhook, HTTP Request, Postgres, Code, Split in Batches and Respond to Webhook nodes).</li>
+<li><b>Claude</b> (Anthropic): reads each email and returns the category, urgency, summary, invoice fields and reply draft.</li>
+<li><b>Postgres</b>: emails, invoices, reply drafts and the clinic info sheet.</li>
+<li><b>Mailpit</b>: a local test mailbox, so no real inbox is touched.</li>
+</ul>
+<p><a href="https://github.com/mcknx/inbox-triage">View the code on GitHub →</a> (workflow, schema, sample emails, dashboard, MIT licence)</p>
+</section>
+
+<section id="setup">
+<h2>How I'd set this up for your business</h2>
+<ol>
+<li><b>You give me</b> access to the inbox (Gmail or Outlook) and your info sheet: services, prices, hours, policies.</li>
+<li><b>We agree the rules:</b> your email categories, what counts as urgent, and where invoices should go (sheet, accounting tool or a table).</li>
+<li><b>We test it together</b> on a week of your real emails until the sorting and drafts match how you work.</li>
+<li><b>Your team works from one screen:</b> sorted inbox, invoices with the total due, and drafts ready to send.</li>
+</ol>
+</section>
+
+<section id="faq">
+<h2>FAQ</h2>
+<h3>Will it make up invoice numbers or amounts?</h3>
+<p>Claude is told to copy invoice fields exactly from the email. Then the workflow checks it in code: an invoice is only saved if the vendor name and invoice number really appear in the email, the amount is a number and the due date is a real date. If anything fails, nothing is saved as an invoice; the email is marked supplier, high urgency, for a person to read. AI can still misread, so every email stays on the dashboard.</p>
+<h3>Does it send emails on its own?</h3>
+<p>No. It only writes reply drafts for patient questions. A staff member reads, edits and sends them. Price and policy answers come only from the clinic&#x27;s info sheet; anything else says a team member will confirm.</p>
+<h3>Does it work with Gmail or Outlook?</h3>
+<p>This demo reads a local test mailbox (Mailpit) so no real inbox is touched. n8n has Gmail and Microsoft Outlook nodes, so the &#x27;check the mailbox&#x27; step would be swapped for one of those and connected to your account; the sort, extract and save steps stay the same. I have not run it on a real Gmail or Outlook inbox yet.</p>
+<h3>Can the invoices go to my spreadsheet or accounting tool?</h3>
+<p>In the demo they go to a Postgres table and the dashboard. n8n has Google Sheets, Airtable, QuickBooks and Xero nodes, so the save step could write there instead; I would set that up and test it with your own invoices.</p>
+<h3>What does it cost to run?</h3>
+<p>Two running costs: hosting n8n (self-hosted on a small server, or an n8n Cloud plan) and AI usage, billed per email by the AI provider. I would estimate both from your monthly email volume before we start.</p>
+</section>
+
+<section id="transcript" class="transcript">
+<h2>Video transcript</h2>
+<p id="transcript-intro" class="note">Full narration of the 87-second demo video, with start times.</p>
+<p><time>0:00</time> A clinic&#x27;s front desk drowns in email. Patient questions, supplier promos, spam. And somewhere in there, an invoice that slips past its due date.</p>
+<p><time>0:11</time> This is Bayview Dental&#x27;s inbox, a local test mailbox with eight new emails. Three of them are supplier invoices.</p>
+<p><time>0:19</time> The workflow checks the mailbox every minute. Here I trigger it right away. Claude reads each email live, and the dashboard fills as they land.</p>
+<p><time>0:42</time> Every invoice goes into one table: vendor, number, amount and due date. CleanPro is already overdue, so it shows in red. Total due: 28,150 pesos.</p>
+<p><time>0:55</time> For patient questions, it drafts the reply. The whitening price comes from the clinic&#x27;s own info, ready for staff to check and send.</p>
+<p><time>1:04</time> Behind it is one n8n workflow. Check the mailbox. Skip what&#x27;s already sorted. Read each email. Claude sorts it and pulls out the invoice. Save it for the dashboard.</p>
+<p><time>1:19</time> Built by McKeen Asma, AI Automation VA, with n8n, and Claude.</p>
+</section>
+
+<p class="next">Same clinic: <a href="https://mckenneth.vercel.app/case-studies/ai-lead-responder/">AI lead responder</a> (the lead form) · <a href="https://mckenneth.vercel.app/case-studies/clinic-chat-assistant/">clinic chat assistant</a> (website chat and booking)</p>
+
+<footer>
+<b>McKeen Asma</b> · AI Automation VA · Davao, Philippines<br>
+Portfolio: <a href="https://mckenneth.vercel.app">mckenneth.vercel.app</a>
+</footer>
+</article>
+</main>
+</body>
+</html>

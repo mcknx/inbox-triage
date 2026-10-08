@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inbox triage — Bayview Dental</title>
+<style>
+  :root { --ink:#0f2a3d; --muted:#5b7083; --line:#dde5ec; --brand:#0e7c86; --bg:#f3f7fa; --ok:#1a7f4b; --warn:#b54708; --bad:#c0262d; --new:#2563eb; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  header { background:#fff; border-bottom:1px solid var(--line); padding:12px 24px; display:flex; align-items:center; gap:10px; }
+  .logo { width:32px; height:32px; border-radius:9px; background:var(--brand); color:#fff; display:grid; place-items:center; font-weight:700; flex:none; }
+  h1 { margin:0; font-size:17px; } h1 small { color:var(--muted); font-weight:400; font-size:14px; }
+  .meta { margin-left:auto; color:var(--muted); font-size:13px; display:flex; align-items:center; gap:6px; white-space:nowrap; }
+  .dot { width:8px; height:8px; border-radius:50%; background:var(--ok); animation:pulse 2s infinite; }
+  @keyframes pulse { 50% { opacity:.3; } }
+  main { max-width:1280px; margin:0 auto; padding:16px 24px 24px; }
+  .stats { display:grid; grid-template-columns:repeat(4, 1fr); gap:12px; margin-bottom:16px; }
+  .stat { background:#fff; border:1px solid var(--line); border-radius:10px; padding:10px 14px; box-shadow:0 1px 2px rgba(15,42,61,.04); }
+  .stat span { display:block; color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.06em; }
+  .stat b { font-size:22px; font-variant-numeric:tabular-nums; }
+  .stat.alert b { color:var(--bad); }
+  .grid { display:grid; grid-template-columns:1.15fr 1fr; gap:16px; align-items:start; }
+  h2 { margin:0 0 10px; font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); display:flex; align-items:center; gap:8px; }
+  h2 span { margin-left:auto; background:#fff; border:1px solid var(--line); border-radius:999px; padding:0 9px; font-size:12px; color:var(--ink); letter-spacing:0; }
+  .panel { background:#fff; border:1px solid var(--line); border-radius:10px; box-shadow:0 1px 2px rgba(15,42,61,.04); overflow:hidden; }
+  .mail { display:grid; grid-template-columns:auto 1fr auto; gap:2px 10px; padding:9px 14px; border-top:1px solid var(--line); }
+  .mail:first-child { border-top:0; }
+  .mail.high { box-shadow:inset 4px 0 var(--bad); }
+  .mail .who { font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .mail time { color:var(--muted); font-size:12px; white-space:nowrap; }
+  .mail p { grid-column:2 / 4; margin:0; color:var(--muted); font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .badge { font-size:11px; font-weight:700; border-radius:4px; padding:1px 7px; text-transform:capitalize; align-self:center; text-align:center; min-width:66px; }
+  .invoice { background:#e3f2f3; color:var(--brand); } .enquiry { background:#e5edfd; color:var(--new); }
+  .supplier { background:#eef1f4; color:var(--muted); } .spam { background:#fde8e8; color:var(--bad); } .other { background:#fff4e5; color:var(--warn); }
+  .urg { font-size:11px; font-weight:700; color:var(--bad); margin-left:6px; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th, td { padding:9px 12px; text-align:left; border-top:1px solid var(--line); }
+  th { border-top:0; color:var(--muted); font-weight:600; font-size:12px; background:#f8fafc; }
+  td.num, th.num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  td.due { white-space:nowrap; } tr.overdue td.due { color:var(--bad); font-weight:700; }
+  tfoot td { font-weight:700; background:#f8fafc; }
+  .drafts { margin-top:16px; }
+  .cards { display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; }
+  .card { background:#fff; border:1px solid var(--line); border-left:4px solid var(--new); border-radius:10px; padding:12px 14px; box-shadow:0 1px 2px rgba(15,42,61,.04); }
+  .card .to { color:var(--muted); font-size:12px; } .card b { display:block; margin:2px 0 6px; }
+  .card div { white-space:pre-wrap; font-size:13px; }
+  .empty { color:var(--muted); padding:20px; text-align:center; }
+  .cards .empty { border:1px dashed var(--line); border-radius:10px; grid-column:1 / -1; }
+  @media (max-width:900px) { .grid, .cards { grid-template-columns:1fr; } }
+  @media (max-width:600px) {
+    header, main { padding-left:16px; padding-right:16px; } h1 small { display:none; } #st { display:none; }
+    .stats { grid-template-columns:repeat(2, 1fr); gap:8px; } .stat b { font-size:19px; }
+    th, td { padding:8px; } .hide-sm { display:none; } .mail p { white-space:normal; }
+  }
+</style>
+</head>
+<body>
+<header><div class="logo">B</div><h1>Front desk <small>· inbox triage</small></h1><div class="meta"><span class="dot"></span><span id="st">Live · refreshes every 3 s</span></div></header>
+<main>
+  <section class="stats">
+    <div class="stat"><span>Emails sorted</span><b id="s-emails">0</b></div>
+    <div class="stat"><span>Invoices captured</span><b id="s-inv">0</b></div>
+    <div class="stat"><span>Total due</span><b id="s-total">₱0.00</b></div>
+    <div class="stat alert"><span>Needs attention</span><b id="s-high">0</b></div>
+  </section>
+  <div class="grid">
+    <section><h2>Sorted inbox<span id="n-emails">0</span></h2><div class="panel" id="emails"></div></section>
+    <section><h2>Invoices<span id="n-inv">0</span></h2><div class="panel" id="invoices"></div></section>
+  </div>
+  <section class="drafts"><h2>Reply drafts ready to send<span id="n-drafts">0</span></h2><div class="cards" id="drafts"></div></section>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const peso = n => "₱" + Number(n).toLocaleString("en-PH", { minimumFractionDigits:2, maximumFractionDigits:2 });
+const day = d => new Date(d + "T00:00:00").toLocaleDateString("en-US", { month:"short", day:"numeric" });
+const when = t => new Date(t).toLocaleString("en-US", { timeZone:"Asia/Manila", month:"short", day:"numeric", hour:"numeric", minute:"2-digit" });
+
+let prev = "";
+async function load() {
+  try {
+    const raw = await (await fetch("/p3/state")).text();
+    $("st").textContent = "Live · refreshes every 3 s";
+    if (raw === prev) return;
+    prev = raw;
+    const { emails, invoices, drafts } = JSON.parse(raw);
+    const today = new Date().toLocaleDateString("en-CA", { timeZone:"Asia/Manila" }); // YYYY-MM-DD
+    const total = invoices.reduce((s, i) => s + Number(i.amount), 0);
+    $("s-emails").textContent = $("n-emails").textContent = emails.length;
+    $("s-inv").textContent = $("n-inv").textContent = invoices.length;
+    $("s-total").textContent = peso(total);
+    $("s-high").textContent = emails.filter(e => e.urgency === "high").length;
+    $("n-drafts").textContent = drafts.length;
+
+    $("emails").innerHTML = emails.map(e => `<div class="mail ${esc(e.urgency)}">
+        <span class="badge ${esc(e.category)}">${esc(e.category)}</span>
+        <span class="who">${esc(e.from_addr)}${e.urgency === "high" ? '<span class="urg">● Urgent</span>' : ""}</span>
+        <time>${when(e.received_at)}</time>
+        <p title="${esc(e.subject)}">${esc(e.summary || e.subject)}</p>
+      </div>`).join("") || `<div class="empty">Inbox is empty.</div>`;
+
+    $("invoices").innerHTML = invoices.length ? `<table>
+        <thead><tr><th>Vendor</th><th class="hide-sm">Invoice #</th><th class="num">Amount</th><th>Due</th></tr></thead>
+        <tbody>${invoices.map(i => { const late = i.due_date < today; return `<tr class="${late ? "overdue" : ""}">
+          <td>${esc(i.vendor)}</td><td class="hide-sm">${esc(i.invoice_no)}</td><td class="num">${peso(i.amount)}</td>
+          <td class="due">${day(i.due_date)}${late ? " · overdue" : ""}</td></tr>`; }).join("")}</tbody>
+        <tfoot><tr><td>Total due</td><td class="hide-sm"></td><td class="num">${peso(total)}</td><td></td></tr></tfoot>
+      </table>` : `<div class="empty">No invoices captured yet.</div>`;
+
+    $("drafts").innerHTML = drafts.map(d => `<article class="card">
+        <span class="to">To ${esc(d.to_addr)}</span><b>${esc(d.subject)}</b><div>${esc(d.body)}</div>
+      </article>`).join("") || `<div class="empty">No reply drafts yet.</div>`;
+  } catch { $("st").textContent = "Offline · retrying…"; }
+}
+load(); setInterval(load, 3000);
+</script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+[
+  {
+    "from": "DentSupply PH Billing <billing@dentsupply-ph.example.com>",
+    "subject": "Invoice INV-2041 from DentSupply PH",
+    "body": "Hi Bayview Dental team,\n\nPlease find below your invoice for the October restock.\n\nVendor: DentSupply PH\nInvoice no: INV-2041\nInvoice date: {{date+0}}\nItems: nitrile gloves (20 boxes), prophy paste (6 jars), composite refills (4)\nAmount due: PHP 18,450.00\nDue date: {{date+10}}\n\nPayment via bank transfer to DentSupply PH (demo account). Please quote INV-2041 as reference.\n\nThank you,\nRica Santos\nAccounts, DentSupply PH (fictional vendor)"
+  },
+  {
+    "from": "Davao Lab Works <accounts@davaolabworks.example.com>",
+    "subject": "Statement - INV-778 (crowns, Sept)",
+    "body": "Good day Doc,\n\nThis is our billing for the two PFM crowns delivered last week.\n\nVendor: Davao Lab Works\nInvoice no: INV-778\nAmount: PHP 6,200.00\nDue date: {{date+3}}\n\nKindly settle on or before the due date. GCash or bank deposit is fine.\n\nRegards,\nJun Villanueva\nDavao Lab Works (fictional dental lab)"
+  },
+  {
+    "from": "CleanPro Services <billing@cleanpro.example.com>",
+    "subject": "OVERDUE: Invoice #CP-3310",
+    "body": "Hello Bayview Dental,\n\nOur records show the invoice below is now past due.\n\nVendor: CleanPro Services\nInvoice no: #CP-3310\nService: monthly clinic deep cleaning and sanitation\nAmount: PHP 3,500.00\nDue date: {{date-2}}\n\nPlease arrange payment at your earliest convenience to avoid service interruption.\n\nThanks,\nMae Lim\nCleanPro Services (fictional vendor)"
+  },
+  {
+    "from": "Liza Reyes <liza.reyes@example.com>",
+    "subject": "How much is teeth whitening?",
+    "body": "Hi! I saw your clinic on Facebook. How much is teeth whitening and do you take walk-ins on Saturday? Thank you!\n\nLiza"
+  },
+  {
+    "from": "Mark Dela Cruz <mark.delacruz@example.com>",
+    "subject": "Need to reschedule my appointment today",
+    "body": "Hello, I have a cleaning appointment today at 3pm but something came up at work. Can I move it to tomorrow or Saturday instead? Sorry for the short notice.\n\nMark Dela Cruz"
+  },
+  {
+    "from": "Grace Tan <grace.tan@example.com>",
+    "subject": "Do you accept PhilCare HMO?",
+    "body": "Good afternoon. I'd like to have a check-up and filling. Do you accept PhilCare? If not, which HMOs do you accept?\n\nThanks,\nGrace"
+  },
+  {
+    "from": "DentSupply PH <news@dentsupply-ph.example.com>",
+    "subject": "October promos: 15% off impression materials",
+    "body": "Hi Doctor,\n\nThis month only: 15% off all alginate and silicone impression materials, plus free delivery within Davao City for orders above PHP 5,000.\n\nBrowse the catalogue on our site or reply to this email to order.\n\nDentSupply PH (fictional vendor)\nYou are receiving this because you are a DentSupply PH customer."
+  },
+  {
+    "from": "Prize Center <winner@lucky-prize.example.com>",
+    "subject": "CONGRATULATIONS!!! You won a FREE iPhone - claim now",
+    "body": "Dear Winner,\n\nYour email was selected in our international lucky draw!!! To claim your FREE iPhone send your full name, bank account number and a PHP 500 processing fee via GCash within 24 HOURS.\n\nClick here to claim: http://lucky-prize.example.com/claim\n\nPrize Center"
+  }
+]
