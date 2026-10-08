@@ -22,24 +22,26 @@ function flowHtml() {
   const names = new Set(wf.nodes.map((n) => n.name));
   const groups = [
     ["Check the mailbox", ["Every minute", "Run now", "List messages"]],
-    ["Skip what's sorted", ["Known ids", "Filter new", "Any new?"]],
+    ["Skip what's sorted", ["Known ids", "Filter new", "Any new?", "Nothing new"]],
     ["Read each email", ["Each email", "Get message", "Load kb"]],
     ["Claude sorts + extracts", ["Build prompt", "Ask Claude", "Parse"]],
     ["Save for the dashboard", ["Save", "Summary", "Respond"]],
   ];
-  for (const n of groups.flatMap((g) => g[1])) if (!names.has(n)) throw new Error("workflow.json has no node " + n);
+  const shown = groups.flatMap((g) => g[1]);
+  for (const n of shown) if (!names.has(n)) throw new Error("workflow.json has no node " + n);
+  if (shown.length !== names.size) throw new Error(`flow shows ${shown.length} of ${names.size} nodes`);
   const boxes = groups.map(([title, ns], i) => `${i ? '<div class="arr" style="animation-delay:' + (1.6 + i * 1.6) + 's">→</div>' : ""}
     <div class="box" style="animation-delay:${1.6 + i * 1.6}s"><div class="k">${i + 1}</div><b>${title}</b><span>${ns.join(" · ")}</span></div>`).join("");
   return `<!doctype html><meta charset="utf-8"><style>
   body{margin:0;height:100vh;display:grid;place-items:center;background:#f3f7fa;color:#0f2a3d;font:16px -apple-system,Segoe UI,Roboto,sans-serif}
   h2{margin:0 0 6px;font-size:30px;text-align:center} p{margin:0 0 40px;text-align:center;color:#5b7083}
-  .row{display:flex;align-items:center;gap:10px}
-  .box{width:196px;min-height:150px;padding:20px 14px;background:#fff;border:2px solid #dde5ec;border-radius:14px;text-align:center;opacity:.35;animation:on .5s forwards}
+  .row{display:flex;align-items:center;justify-content:center;gap:6px}
+  .box{width:170px;min-height:150px;padding:18px 10px;box-sizing:border-box;background:#fff;border:2px solid #dde5ec;border-radius:14px;text-align:center;opacity:.35;animation:on .5s forwards}
   .box b{display:block;font-size:18px;margin:8px 0 6px;line-height:1.25} .box span{color:#5b7083;font-size:13px}
   .k{width:30px;height:30px;margin:0 auto;border-radius:50%;background:#0e7c86;color:#fff;display:grid;place-items:center;font-weight:700}
-  .arr{font-size:28px;color:#0e7c86;opacity:.2;animation:on2 .5s forwards}
+  .arr{font-size:24px;color:#0e7c86;opacity:.2;animation:on2 .5s forwards}
   @keyframes on{to{opacity:1;border-color:#0e7c86;box-shadow:0 8px 24px rgba(14,124,134,.18)}} @keyframes on2{to{opacity:1}}
-  </style><div><h2>${wf.name.replace(/^VA P3 — /, "")}: the n8n workflow</h2><p>Rendered from workflow.json · ${wf.nodes.length} nodes in 5 steps</p><div class="row">${boxes}</div></div>`;
+  </style><div><h2>${wf.name.replace(/^VA P3 — /, "")}: the n8n workflow</h2><p>Rendered from workflow.json · all ${wf.nodes.length} nodes, grouped in 5 steps</p><div class="row">${boxes}</div></div>`;
 }
 const card = (eyebrow, title, sub) => `<!doctype html><meta charset="utf-8"><style>
   body{margin:0;height:100vh;display:grid;place-items:center;background:#0f2a3d;color:#fff;font:18px -apple-system,Segoe UI,Roboto,sans-serif;text-align:center}
