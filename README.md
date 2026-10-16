@@ -3,7 +3,32 @@
 An inbox assistant for a dental clinic's front desk. Every minute it reads new email, has Claude sort each one (invoice, patient enquiry, supplier, spam), copies supplier invoice details into one table, flags overdue and due-soon bills as urgent, and drafts replies to patient questions for staff to check and send.
 The front desk sees the sorted inbox, the invoices with the total due, and the drafts on one dashboard.
 
-Live case study (with the demo video): https://mckenneth.vercel.app/case-studies/inbox-triage/
+**What this proves:** an n8n workflow that reads a mailbox every minute, has Claude sort each email, keeps an invoice only when its vendor and number really appear in the email, flags overdue bills, drafts replies for staff, and never processes the same email twice. `./check.sh` asserts each of those end to end.
+
+[![Demo: 8 emails land in the test mailbox, the workflow sorts them, extracts 3 invoices (28,150 due, overdue one in red) and drafts patient replies](demo/demo.gif)](demo/p3-demo.mp4)
+
+12-second preview at 5x speed. Click it for the full 83-second narrated demo (`demo/p3-demo.mp4`).
+
+**Live case study:** https://mckenneth.vercel.app/case-studies/inbox-triage/
+
+**Checks**, run on 16 Oct 2026 (`parse.check.mjs` needs no services; `check.sh` ran against the Docker stack below with live Claude calls; real output):
+
+```text
+$ node parse.check.mjs
+parse ok: 8 cases
+$ ./check.sh
+sent 8 emails to frontdesk@bayviewdental.example
+run 1: {"processed":8,"invoices":3,"drafts":3,"high":3}
+p3 ok: 8 emails
+p3 ok: invoices 3500.00,6200.00,18450.00
+p3 ok: 3 drafts
+p3 ok: spam
+p3 ok: overdue CleanPro is high
+run 2: {"processed":0,"invoices":0,"drafts":0,"high":0}
+p3 ok: idempotent
+```
+
+**Caveat:** demo for a fictional clinic (Bayview Dental), not client work. Vendors, patients and invoices are made up, and it reads a local test mailbox (Mailpit), not a real inbox. Nothing is sent: drafts wait for a person.
 
 ## Architecture
 
